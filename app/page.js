@@ -1,44 +1,16 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+
+const stockMap = {
+  '2330': '台積電',
+  '3231': '緯創'
+}
 
 export default function Page() {
   const [code, setCode] = useState('2330')
-  const [name, setName] = useState('')
-  const [price, setPrice] = useState('--')
-  const [change, setChange] = useState('--')
 
-  useEffect(() => {
-    async function fetchStock() {
-      try {
-        const res = await fetch(`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${code}.tw`)
-        const data = await res.json()
-        const d = data.msgArray?.[0]
-
-        if (d) {
-          // 股票名稱
-          setName(d.n)
-
-          // 價格處理（沒成交用昨收）
-          const priceNow = d.z === '-' ? d.y : d.z
-          const prevClose = d.y
-
-          setPrice(priceNow)
-
-          // 漲跌幅計算
-          if (priceNow !== '-' && prevClose !== '-') {
-            const changePercent = ((priceNow - prevClose) / prevClose * 100).toFixed(2)
-            setChange(changePercent + '%')
-          }
-        }
-      } catch (e) {
-        console.log(e)
-      }
-    }
-
-    fetchStock()
-    const interval = setInterval(fetchStock, 10000)
-    return () => clearInterval(interval)
-  }, [code])
+  // 判斷市場（上市 or 上櫃）
+  const market = code.startsWith('3') ? 'TPEX' : 'TWSE'
 
   return (
     <main style={{ background: '#000', color: '#67e8f9', minHeight: '100vh', padding: 20 }}>
@@ -60,20 +32,20 @@ export default function Page() {
       />
 
       <h2 style={{ marginTop: 20 }}>
-        {code} {name} ｜ 股價：{price} ｜ 漲跌幅：{change}
+        {code} {stockMap[code] || '（查無名稱）'}
       </h2>
 
-      {/* K線圖 */}
+      {/* 🔥 TradingView 正確市場 */}
       <div style={{ marginTop: 20 }}>
         <iframe
-          src={`https://s.tradingview.com/widgetembed/?symbol=TWSE:${code}&interval=D&theme=dark&style=1&locale=zh_TW`}
+          src={`https://s.tradingview.com/widgetembed/?symbol=${market}:${code}&interval=D&theme=dark&style=1&locale=zh_TW`}
           width="100%"
           height="500"
           frameBorder="0"
         />
       </div>
 
-      {/* AI 分析（基礎版） */}
+      {/* AI 區塊 */}
       <div style={{
         marginTop: 20,
         padding: 20,
@@ -81,9 +53,9 @@ export default function Page() {
         borderRadius: 10
       }}>
         <h3>AI 分析</h3>
-        <p>趨勢：觀察均線排列（K線圖）</p>
+        <p>趨勢：觀察K線與均線</p>
         <p>策略：回檔布局 / 突破追蹤</p>
-        <p>風險：跌破前低需留意</p>
+        <p>風險：跌破支撐需注意</p>
       </div>
 
     </main>
