@@ -1,31 +1,72 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-const db = {
-  '2330': { name:'台積電', price:'968', change:'+1.8%', support:'940', pressure:'990', summary:'AI需求帶動，趨勢偏多。' },
-  '3231': { name:'緯創', price:'118', change:'+2.1%', support:'112', pressure:'123', summary:'AI伺服器題材，量價偏強。' }
-}
+export default function Page() {
+  const [code, setCode] = useState('2330')
+  const [price, setPrice] = useState('--')
+  const [change, setChange] = useState('--')
 
-export default function Page(){
- const [code,setCode]=useState('2330')
- const d = db[code] || { name:'查無資料', price:'--', change:'--', support:'--', pressure:'--', summary:'請輸入代號' }
+  // 🔹 即時股價（免費 API）
+  useEffect(() => {
+    async function fetchStock() {
+      try {
+        const res = await fetch(`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${code}.tw`)
+        const data = await res.json()
+        const d = data.msgArray?.[0]
 
- const card={background:'#08111f',border:'1px solid #0ea5e9',borderRadius:16,padding:16}
- return (
-  <main style={{background:'#000',color:'#67e8f9',minHeight:'100vh',padding:30,fontFamily:'Arial'}}>
-   <h1 style={{fontSize:40,marginTop:0}}>台股 AI 看板</h1>
-   <p>100% 穩定部署版</p>
-   <input value={code} onChange={e=>setCode(e.target.value)} placeholder="輸入代號 2330"
-    style={{padding:12,borderRadius:10,border:'1px solid #0ea5e9',background:'#111',color:'#fff'}} />
-   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginTop:20}}>
-    <div style={card}><b>{code} {d.name}</b></div>
-    <div style={card}>股價<br/>{d.price}</div>
-    <div style={card}>漲跌幅<br/>{d.change}</div>
-    <div style={card}>支撐 / 壓力<br/>{d.support} / {d.pressure}</div>
-   </div>
-   <div style={{...card,marginTop:20}}>
-    <b>AI 分析</b><br/>{d.summary}
-   </div>
-  </main>
- )
+        if (d) {
+          setPrice(d.z)
+          setChange(((d.z - d.y) / d.y * 100).toFixed(2) + '%')
+        }
+      } catch (e) {
+        console.log(e)
+      }
+    }
+
+    fetchStock()
+    const interval = setInterval(fetchStock, 10000) // 每10秒更新
+    return () => clearInterval(interval)
+  }, [code])
+
+  return (
+    <main style={{ background: '#000', color: '#67e8f9', minHeight: '100vh', padding: 20 }}>
+
+      <h1 style={{ fontSize: 32 }}>台股 AI 看板</h1>
+
+      <input
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        placeholder="輸入股票代號 2330"
+        style={{ padding: 10, marginTop: 10, background: '#111', color: '#fff' }}
+      />
+
+      <h2 style={{ marginTop: 20 }}>
+        {code} ｜ 股價：{price} ｜ 漲跌幅：{change}
+      </h2>
+
+      {/* 🔥 TradingView K線圖 */}
+      <div style={{ marginTop: 20 }}>
+        <iframe
+          src={`https://s.tradingview.com/widgetembed/?symbol=TWSE:${code}&interval=D&theme=dark&style=1&locale=zh_TW`}
+          width="100%"
+          height="500"
+          frameBorder="0"
+        />
+      </div>
+
+      {/* AI 分析（簡化版） */}
+      <div style={{
+        marginTop: 20,
+        padding: 20,
+        border: '1px solid #0ea5e9',
+        borderRadius: 10
+      }}>
+        <h3>AI 分析</h3>
+        <p>趨勢：觀察均線排列（K線圖）</p>
+        <p>策略：回檔布局 / 突破追蹤</p>
+        <p>風險：跌破前低需留意</p>
+      </div>
+
+    </main>
+  )
 }
