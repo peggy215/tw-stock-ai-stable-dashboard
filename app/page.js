@@ -1,16 +1,12 @@
 'use client'
 import { useState } from 'react'
 
-const stockMap = {
-  '2330': '台積電',
-  '3231': '緯創'
-}
-
 export default function Page() {
   const [code, setCode] = useState('2330')
 
-  // 判斷市場（上市 or 上櫃）
-  const market = code.startsWith('3') ? 'TPEX' : 'TWSE'
+  // 嘗試兩個市場（避免抓不到）
+  const tvSymbolTWSE = `TWSE:${code}`
+  const tvSymbolTPEX = `TPEX:${code}`
 
   return (
     <main style={{ background: '#000', color: '#67e8f9', minHeight: '100vh', padding: 20 }}>
@@ -32,16 +28,24 @@ export default function Page() {
       />
 
       <h2 style={{ marginTop: 20 }}>
-        {code} {stockMap[code] || '（查無名稱）'}
+        股票代號：{code}
       </h2>
 
-      {/* 🔥 TradingView 正確市場 */}
+      {/* ✅ 主圖（上市） */}
       <div style={{ marginTop: 20 }}>
         <iframe
-          src={`https://s.tradingview.com/widgetembed/?symbol=${market}:${code}&interval=D&theme=dark&style=1&locale=zh_TW`}
+          src={`https://s.tradingview.com/widgetembed/?symbol=${tvSymbolTWSE}&interval=D&theme=dark&style=1&locale=zh_TW`}
           width="100%"
           height="500"
-          frameBorder="0"
+        />
+      </div>
+
+      {/* 🔁 備用圖（上櫃） */}
+      <div style={{ marginTop: 20 }}>
+        <iframe
+          src={`https://s.tradingview.com/widgetembed/?symbol=${tvSymbolTPEX}&interval=D&theme=dark&style=1&locale=zh_TW`}
+          width="100%"
+          height="300"
         />
       </div>
 
@@ -52,10 +56,10 @@ export default function Page() {
         border: '1px solid #0ea5e9',
         borderRadius: 10
       }}>
-        <h3>AI 分析</h3>
+        <h3>AI 分析（基礎版）</h3>
         <p>趨勢：觀察K線與均線</p>
         <p>策略：回檔布局 / 突破追蹤</p>
-        <p>風險：跌破支撐需注意</p>
+        <p>風險：跌破前低需留意</p>
       </div>
 
     </main>
