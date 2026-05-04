@@ -1,12 +1,35 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function Page() {
+  const containerRef = useRef(null)
   const [code, setCode] = useState('2330')
 
-  // 嘗試兩個市場（避免抓不到）
-  const tvSymbolTWSE = `TWSE:${code}`
-  const tvSymbolTPEX = `TPEX:${code}`
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    containerRef.current.innerHTML = ''
+
+    const script = document.createElement('script')
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'
+    script.async = true
+
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: `TWSE:${code}`,   // ✅ 強制台股
+      interval: 'D',
+      timezone: 'Asia/Taipei',
+      theme: 'dark',
+      style: '1',
+      locale: 'zh_TW',
+      enable_publishing: false,
+      hide_top_toolbar: false,
+      hide_legend: false,
+      save_image: false
+    })
+
+    containerRef.current.appendChild(script)
+  }, [code])
 
   return (
     <main style={{ background: '#000', color: '#67e8f9', minHeight: '100vh', padding: 20 }}>
@@ -27,39 +50,18 @@ export default function Page() {
         }}
       />
 
-      <h2 style={{ marginTop: 20 }}>
-        股票代號：{code}
-      </h2>
+      <div style={{ height: '600px', marginTop: 20 }} ref={containerRef}></div>
 
-      {/* ✅ 主圖（上市） */}
-      <div style={{ marginTop: 20 }}>
-        <iframe
-          src={`https://s.tradingview.com/widgetembed/?symbol=${tvSymbolTWSE}&interval=D&theme=dark&style=1&locale=zh_TW`}
-          width="100%"
-          height="500"
-        />
-      </div>
-
-      {/* 🔁 備用圖（上櫃） */}
-      <div style={{ marginTop: 20 }}>
-        <iframe
-          src={`https://s.tradingview.com/widgetembed/?symbol=${tvSymbolTPEX}&interval=D&theme=dark&style=1&locale=zh_TW`}
-          width="100%"
-          height="300"
-        />
-      </div>
-
-      {/* AI 區塊 */}
       <div style={{
         marginTop: 20,
         padding: 20,
         border: '1px solid #0ea5e9',
         borderRadius: 10
       }}>
-        <h3>AI 分析（基礎版）</h3>
-        <p>趨勢：觀察K線與均線</p>
+        <h3>AI 分析（下一步會升級）</h3>
+        <p>趨勢：觀察均線排列</p>
         <p>策略：回檔布局 / 突破追蹤</p>
-        <p>風險：跌破前低需留意</p>
+        <p>風險：跌破支撐需留意</p>
       </div>
 
     </main>
