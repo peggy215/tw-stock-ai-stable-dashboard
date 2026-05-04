@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react'
 
 export default function Page() {
   const [code, setCode] = useState('2330')
+  const [name, setName] = useState('')
   const [price, setPrice] = useState('--')
   const [change, setChange] = useState('--')
 
-  // 🔹 即時股價（免費 API）
   useEffect(() => {
     async function fetchStock() {
       try {
@@ -15,8 +15,20 @@ export default function Page() {
         const d = data.msgArray?.[0]
 
         if (d) {
-          setPrice(d.z)
-          setChange(((d.z - d.y) / d.y * 100).toFixed(2) + '%')
+          // 股票名稱
+          setName(d.n)
+
+          // 價格處理（沒成交用昨收）
+          const priceNow = d.z === '-' ? d.y : d.z
+          const prevClose = d.y
+
+          setPrice(priceNow)
+
+          // 漲跌幅計算
+          if (priceNow !== '-' && prevClose !== '-') {
+            const changePercent = ((priceNow - prevClose) / prevClose * 100).toFixed(2)
+            setChange(changePercent + '%')
+          }
         }
       } catch (e) {
         console.log(e)
@@ -24,7 +36,7 @@ export default function Page() {
     }
 
     fetchStock()
-    const interval = setInterval(fetchStock, 10000) // 每10秒更新
+    const interval = setInterval(fetchStock, 10000)
     return () => clearInterval(interval)
   }, [code])
 
@@ -37,14 +49,21 @@ export default function Page() {
         value={code}
         onChange={(e) => setCode(e.target.value)}
         placeholder="輸入股票代號 2330"
-        style={{ padding: 10, marginTop: 10, background: '#111', color: '#fff' }}
+        style={{
+          padding: 10,
+          marginTop: 10,
+          background: '#111',
+          color: '#fff',
+          border: '1px solid #0ea5e9',
+          borderRadius: 8
+        }}
       />
 
       <h2 style={{ marginTop: 20 }}>
-        {code} ｜ 股價：{price} ｜ 漲跌幅：{change}
+        {code} {name} ｜ 股價：{price} ｜ 漲跌幅：{change}
       </h2>
 
-      {/* 🔥 TradingView K線圖 */}
+      {/* K線圖 */}
       <div style={{ marginTop: 20 }}>
         <iframe
           src={`https://s.tradingview.com/widgetembed/?symbol=TWSE:${code}&interval=D&theme=dark&style=1&locale=zh_TW`}
@@ -54,7 +73,7 @@ export default function Page() {
         />
       </div>
 
-      {/* AI 分析（簡化版） */}
+      {/* AI 分析（基礎版） */}
       <div style={{
         marginTop: 20,
         padding: 20,
